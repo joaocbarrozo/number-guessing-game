@@ -9,7 +9,7 @@ read -r USERNAME
 # Check if user already exists
 CHECK_USERNAME=$($PSQL "SELECT * FROM users WHERE name LIKE '$USERNAME'")
 if [[ -z $CHECK_USERNAME ]]; then
-  $PSQL "INSERT INTO users(name) VALUES('$USERNAME')"
+  INSERT=$($PSQL "INSERT INTO users(name) VALUES('$USERNAME')")
   echo Welcome, $USERNAME! It looks like this is your first time here.
 else
   # Get user stats
@@ -26,10 +26,21 @@ try() {
   read -r TRY
   # Check if TRY is a number
   if [[ $TRY =~ ^[0-9]+$ ]]; then
-    echo is a number
+    ATTEMPTS=$((ATTEMPTS + 1))
+    if [ $TRY -lt $NUMBER ]; then
+      echo -e "It's higher than that, guess again:"
+      try
+    elif [ $TRY -gt $NUMBER ]; then
+      echo -e "It's lower than that, guess again:"
+      try
+    else 
+      echo You guessed it in $ATTEMPTS tries. The secret number was $NUMBER. Nice job!
+      INSERT=$($PSQL "INSERT INTO games(user_id, attempts) VALUES($USER_ID, $ATTEMPTS)")
+    fi
   else
     echo That is not an integer, guess again:
     try
   fi
 }
+# Call function try
 try
